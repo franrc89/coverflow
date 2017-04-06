@@ -30,7 +30,7 @@
 		getWheel	= function(event) {
 						if ('deltaY' in event.originalEvent) {
 							return 0 - event.originalEvent.deltaY;
-						} else if ('wheelDelta' in event.originalEvent) { 
+						} else if ('wheelDelta' in event.originalEvent) {
 							return event.originalEvent.wheelDelta;	// IE
 						}
 					};
@@ -60,7 +60,8 @@
 
 			change:				undefined,		// Whenever index is changed
 			confirm:			undefined,		// Whenever clicking on the current item
-			select:				undefined		// Whenever index is set (also on init)
+			select:				undefined,		// Whenever index is set (also on init)
+			hiddenClass:		'Oculto'
 		},
 
 		_window_handler_resize:		null,
@@ -83,7 +84,7 @@
 			that.hovering			= false;
 			that.pagesize			= 1;
 			that.currentIndex		= that.options.index;
-			
+
 			// Fix height
 			that.element.height(maxHeight);
 			images.on(function() {
@@ -196,6 +197,16 @@
 			return that;
 		},
 
+		/**
+		 * Destroy this object
+		 * @returns {undefined}
+		 */
+		_cleanStyles: function() {
+			this._getAllCovers().each(function(){
+				$(this)[0].style="";
+				$(this).removeClass('current');
+			});
+		},
 
 		/**
 		 * Destroy this object
@@ -204,7 +215,10 @@
 		_destroy: function() {
 			$(window).off('resize', this._window_handler_resize);
 			$(window).off('keydown', this._window_handler_keydown);
+			this.element.off('mousedown tap click touchcancel');
+			this.element.off(wheelEvents);
 			this.element.height('');
+			this._cleanStyles();
 		},
 
 		/**
@@ -220,7 +234,15 @@
 		 * @returns {unresolved}
 		 */
 		_getCovers: function() {
-			return $('> *', this.element);
+			return $("> :not(*[class*='"+this.options.hiddenClass+"'])", this.element);
+		},
+
+		/**
+		 *
+		 * @returns {unresolved}
+		 */
+		_getAllCovers: function() {
+			return $("> *", this.element);
 		},
 
 		_setIndex: function(index, animate, initial) {
@@ -232,15 +254,15 @@
 			if (index !== that.options.index) {
 				// Fix reflections
 				covers.css('position', 'absolute');
-				this._frame(that.options.index);						
+				this._frame(that.options.index);
 
 				if (animate === true || that.options.duration === 0) {
 					that.options.index	= Math.round(index);
-					
+
 					var duration	= typeof that.options.duration === "number"
 									? that.options.duration
 									: jQuery.fx.speeds[that.options.duration] || jQuery.fx.speeds._default;
-					
+
 					this.refresh(duration, that.options.index);
 				} else {
 					that.options.index = Math.round(index);
@@ -267,23 +289,23 @@
 
 			this._setIndex(index, true);
 		},
-		
+
 		_frame: function(frame) {
-			frame = frame.toFixed(6);		
-							
+			frame = frame.toFixed(6);
+
 			var that		= this,
 				covers		= that._getCovers(),
 				count		= covers.length,
-				parentWidth	= that.element.innerWidth(),			
+				parentWidth	= that.element.innerWidth(),
 				coverWidth	= that.options.width || covers.eq(this.options.index).show().get(0).offsetWidth,
 				visible		= that.options.visible === 'density'	? Math.round(parentWidth * that.options.density / coverWidth)
 							: $.isNumeric(that.options.visible)		? that.options.visible
 							: count,
 				parentLeft	= that.element.position().left - ((1 - that.options.outerScale) * coverWidth * 0.5),
 				space		= (parentWidth - (that.options.outerScale * coverWidth)) * 0.5;
-		
+
 			that.pagesize	= visible;
-			
+
 			covers.removeClass('current').each(function(index, cover) {
 				var $cover		= $(cover),
 					position	= index - frame,
@@ -303,21 +325,21 @@
 									) : {}
 								),
 					transform;
-							
+
 				// bad behaviour for being in the middle
 				if (Math.abs(position) < 1) {
 					angle	= 0 - (0 - angle) * Math.abs(position);
 					scale	= 1 - (1 - scale) * Math.abs(position);
 					left	= 0 - (0 - left) * Math.abs(position);
 				}
-				
+
 				//@todo Test CSS for middle behaviour (or does $.interpolate handle it?)
 
 				transform = 'scale(' + scale + ',' + scale + ') perspective(' + (parentWidth * 0.5) + 'px) rotateY(' + angle + 'deg)';
-				
+
 				$cover[isMiddle ? 'addClass' : 'removeClass']('current');
-				$cover[isVisible ? 'show' : 'hide']();				
-						
+				$cover[isVisible ? 'show' : 'hide']();
+
 				$cover.css($.extend(css, {
 					'left':					parentLeft + space + left,
 					'z-index':				zIndex,
@@ -325,33 +347,35 @@
 					'-ms-transform':		transform,
 					'transform':			transform
 				}));
-				
+
 				that._trigger('animateStep', null, [cover, offset, isVisible, isMiddle, sin, cos]);
-				
+
 				if (frame == that.options.index) {
 					that._trigger('animateComplete', null, [cover, offset, isVisible, isMiddle, sin, cos]);
 				}
 			});
 		},
 
-		refresh: function(duration, index) {	
+		refresh: function(duration, index) {
 			var that = this,
 				previous = that.currentIndex,
 				covers = that._getCovers(),
 				covercount = covers.length,
 				triggered = false;
-		
+
+			that._cleanStyles();
+
 			that._callback('before');
-		
+
 			covers.css('position', 'absolute');
 			that.element.stop().animate({
 				'__coverflow_frame':	index || that.options.index
 			}, {
 				'easing':	that.options.easing,
 				'duration': duration || 0,
-				'step':		function(now, fx) {					
-					that._frame(now);					
-					
+				'step':		function(now, fx) {
+					that._frame(now);
+
 					that.currentIndex = Math.max(0, Math.min(Math.round(now), covercount - 1));
 					if (previous !== that.currentIndex) {
 						previous = that.currentIndex;
@@ -361,10 +385,10 @@
 						}
 					}
 				},
-				'complete':		function() {				
+				'complete':		function() {
 					that.currentIndex	= that.options.index;
 					that._callback('after');
-					
+
 					if (!triggered) {
 						that._callback('change');
 					}
