@@ -198,12 +198,12 @@
 		},
 
 		/**
-		 * Destroy this object
+		 * Clean styles of all covers
 		 * @returns {undefined}
 		 */
 		_cleanStyles: function() {
 			this._getAllCovers().each(function(){
-				$(this)[0].style="";
+				$(this).removeAttr('style');
 				$(this).removeClass('current');
 			});
 		},
