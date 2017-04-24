@@ -374,9 +374,23 @@
 				'easing':	that.options.easing,
 				'duration': duration || 0,
 				'step':		function(now, fx) {
+
+					console.log("now:" + now);
+					if (covercount <= previous) {
+						console.log("numero de covers="+covercount);
+						console.log("El elemento ya no existe="+previous);
+						previous = 0;
+						that.currentIndex = 0;
+						now = 0;
+						that.options.index = 0;
+						that._setIndex(0, true);
+					}
+					console.log("Ahora now es:"+now);
+
 					that._frame(now);
 
 					that.currentIndex = Math.max(0, Math.min(Math.round(now), covercount - 1));
+
 					if (previous !== that.currentIndex) {
 						previous = that.currentIndex;
 						that._callback('change');
@@ -395,6 +409,7 @@
 					that._callback('select');
 				}
 			});
+
 		}
 	});
 }(jQuery));
