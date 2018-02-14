@@ -194,6 +194,13 @@
 			// Initialize
 			that._setIndex(that.options.index, false, true);
 
+
+			// Resize
+			setTimeout(function () {
+        		$(window).resize();
+    		}, 250);
+			
+
 			return that;
 		},
 
@@ -375,17 +382,13 @@
 				'duration': duration || 0,
 				'step':		function(now, fx) {
 
-					console.log("now:" + now);
 					if (covercount <= previous) {
-						console.log("numero de covers="+covercount);
-						console.log("El elemento ya no existe="+previous);
 						previous = 0;
 						that.currentIndex = 0;
 						now = 0;
 						that.options.index = 0;
 						that._setIndex(0, true);
 					}
-					console.log("Ahora now es:"+now);
 
 					that._frame(now);
 
